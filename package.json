@@ -1,0 +1,26 @@
+{
+  "name": "daytona",
+  "version": "0.0.1",
+  "description": "Place holder for a upcomming MVC framework using convention over configuration",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/miketerry-org/daytona.git"
+  },
+  "keywords": [
+    "datona",
+    "speedy",
+    "mvc",
+    "convention",
+    "framework"
+  ],
+  "author": "Mike Terry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/miketerry-org/daytona/issues"
+  },
+  "homepage": "https://github.com/miketerry-org/daytona#readme"
+}
