@@ -1,5 +1,5 @@
 {
-  "name": "daytona",
+  "name": "daytonajs",
   "version": "1.0.0",
   "description": "Place holder for a upcomming MVC framework using convention over configuration",
   "main": "index.js",
