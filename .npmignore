@@ -1,0 +1,9 @@
+.ds_store
+.env
+.git
+.gitignore
+.npmignore
+docs/
+node_modules/
+test/
+Todo.md
