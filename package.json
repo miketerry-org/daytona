@@ -4,6 +4,7 @@
   "description": "Place holder for a upcomming MVC framework using convention over configuration",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon index.js --watch .",
     "test": "jest"
   },
   "repository": {
