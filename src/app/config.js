@@ -1,4 +1,4 @@
-// config.js
+// src/app/config.js
 
 "use strict";
 

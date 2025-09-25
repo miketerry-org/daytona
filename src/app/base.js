@@ -1,17 +1,17 @@
-// base.js:
+// src/app/base.js:
 
 "use strict";
 
 const {
   envMode,
+  isDebug,
   isDevelopment,
   isProduction,
   isTesting,
-  isDebug,
 } = require("../lib/environment");
 
 const Strings = require("../lib/strings");
-const NotImplementedError = require("../lib/notImplementedError");
+const Errors = require("./errors");
 
 /**
  * Base class providing core utilities for all subclasses:
@@ -24,60 +24,65 @@ const NotImplementedError = require("../lib/notImplementedError");
  * - Optional initialization hook
  * - JSON serialization hook
  * - Environment mode access
+ * - Error class access (custom error types)
  */
 class Base {
   #logger;
 
-  /**
-   * Constructs a Base instance with default logger = global console.
-   */
   constructor() {
     this.#logger = console;
   }
 
-  /**
-   * Get the current logger.
-   * @returns {object} A logger with expected methods: error, warn, info, debug, trace.
-   */
-  get logger() {
-    return this.#logger;
+  // ─────────────────────────────────────────────────────────────
+  // Error Class Getters
+  // ─────────────────────────────────────────────────────────────
+
+  /** @returns {typeof Errors.ApplicationError} */
+  get ApplicationError() {
+    return Errors.ApplicationError;
   }
 
-  /**
-   * Set a custom logger. Falls back to console if null/undefined.
-   * @param {object|null|undefined} value
-   * @throws {TypeError} If logger is not an object or missing required methods.
-   */
-  set logger(value) {
-    if (value === null || value === undefined) {
-      value = console;
-    }
-
-    if (typeof value !== "object") {
-      throw new TypeError(
-        `Logger must be an object, got type '${typeof value}'`
-      );
-    }
-
-    const required = ["error", "warn", "info", "debug", "trace"];
-    for (const method of required) {
-      if (typeof value[method] !== "function") {
-        throw new TypeError(
-          `Logger object is missing required method '${method}'`
-        );
-      }
-    }
-
-    this.#logger = value;
+  /** @returns {typeof Errors.DatabaseError} */
+  get DatabaseError() {
+    return Errors.DatabaseError;
   }
 
-  /**
-   * Throw an Error with optional template expansion.
-   * Logs the error before throwing.
-   * @param {string} message - Message template or literal.
-   * @param {Object.<string, *>} [values] - Optional placeholder values.
-   * @throws {Error}
-   */
+  /** @returns {typeof Errors.NotFoundError} */
+  get NotFoundError() {
+    return Errors.NotFoundError;
+  }
+
+  /** @returns {typeof Errors.NotImplementedError} */
+  get NotImplementedError() {
+    return Errors.NotImplementedError;
+  }
+
+  /** @returns {typeof Errors.ValidationError} */
+  get ValidationError() {
+    return Errors.ValidationError;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Assertion / Error Handling
+  // ─────────────────────────────────────────────────────────────
+
+  assert(condition, message = "Assertion failed", values = undefined) {
+    if (!condition) {
+      this.throwError(message, values);
+    }
+  }
+
+  notImplemented(methodName) {
+    if (typeof methodName !== "string" || methodName.trim() === "") {
+      methodName = "<unknownMethod>";
+    }
+
+    const msg = `${this.className}.${methodName} is not implemented`;
+    this.logger.error(msg);
+
+    throw new this.NotImplementedError(this.className, methodName);
+  }
+
   throwError(message, values = undefined) {
     let finalMsg = message;
 
@@ -110,40 +115,75 @@ class Base {
     throw err;
   }
 
-  /**
-   * Indicate a subclass method is not implemented.
-   * @param {string} methodName
-   * @throws {NotImplementedError}
-   */
-  notImplemented(methodName) {
-    if (typeof methodName !== "string" || methodName.trim() === "") {
-      methodName = "<unknownMethod>";
-    }
+  // ─────────────────────────────────────────────────────────────
+  // Class Info / Meta
+  // ─────────────────────────────────────────────────────────────
 
-    const msg = `${this.className}.${methodName} is not implemented`;
-    this.logger.error(msg);
-
-    throw new NotImplementedError(this.className, methodName);
+  get className() {
+    return this.constructor?.name || "<UnknownClass>";
   }
 
-  /**
-   * Assert that a condition is truthy. If not, throws via `throwError`.
-   * @param {boolean} condition
-   * @param {string} message
-   * @param {Object.<string, *>} [values]
-   */
-  assert(condition, message = "Assertion failed", values = undefined) {
-    if (!condition) {
-      this.throwError(message, values);
-    }
+  toJSON() {
+    return {
+      class: this.className,
+    };
   }
 
-  /**
-   * Log a message via specified level, falling back to logger.error.
-   * @param {string} level
-   * @param {string} message
-   * @param {Object.<string, *>} [meta]
-   */
+  // ─────────────────────────────────────────────────────────────
+  // Environment Getters
+  // ─────────────────────────────────────────────────────────────
+
+  get envMode() {
+    return envMode;
+  }
+
+  get isDebug() {
+    return isDebug;
+  }
+
+  get isDevelopment() {
+    return isDevelopment;
+  }
+
+  get isProduction() {
+    return isProduction;
+  }
+
+  get isTesting() {
+    return isTesting;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Logger Access
+  // ─────────────────────────────────────────────────────────────
+
+  get logger() {
+    return this.#logger;
+  }
+
+  set logger(value) {
+    if (value === null || value === undefined) {
+      value = console;
+    }
+
+    if (typeof value !== "object") {
+      throw new TypeError(
+        `Logger must be an object, got type '${typeof value}'`
+      );
+    }
+
+    const required = ["error", "warn", "info", "debug", "trace"];
+    for (const method of required) {
+      if (typeof value[method] !== "function") {
+        throw new TypeError(
+          `Logger object is missing required method '${method}'`
+        );
+      }
+    }
+
+    this.#logger = value;
+  }
+
   log(level, message, meta = {}) {
     const fn = this.logger[level];
     if (typeof fn === "function") {
@@ -156,72 +196,12 @@ class Base {
     }
   }
 
-  /**
-   * Returns the class name of this instance.
-   * @returns {string}
-   */
-  get className() {
-    return this.constructor?.name || "<UnknownClass>";
-  }
+  // ─────────────────────────────────────────────────────────────
+  // Lifecycle
+  // ─────────────────────────────────────────────────────────────
 
-  /**
-   * Optional async initialization hook.
-   * @returns {Promise<void>|void}
-   */
   async initialize() {
     // Override in subclass if needed
-  }
-
-  /**
-   * Default JSON representation of the instance.
-   * @returns {Object}
-   */
-  toJSON() {
-    return {
-      class: this.className,
-    };
-  }
-
-  // === Environment-related Getters ===
-
-  /**
-   * Canonical environment mode (e.g., "development", "production")
-   * @returns {string}
-   */
-  get envMode() {
-    return envMode;
-  }
-
-  /**
-   * True if envMode === "development"
-   * @returns {boolean}
-   */
-  get isDevelopment() {
-    return isDevelopment;
-  }
-
-  /**
-   * True if envMode === "production"
-   * @returns {boolean}
-   */
-  get isProduction() {
-    return isProduction;
-  }
-
-  /**
-   * True if envMode === "test"
-   * @returns {boolean}
-   */
-  get isTesting() {
-    return isTesting;
-  }
-
-  /**
-   * True if envMode === "debug"
-   * @returns {boolean}
-   */
-  get isDebug() {
-    return isDebug;
   }
 }
 

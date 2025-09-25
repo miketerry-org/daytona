@@ -1,4 +1,4 @@
-// application.js:
+// src/app/application.js:
 
 "use strict";
 
