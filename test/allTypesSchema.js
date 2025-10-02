@@ -1,8 +1,19 @@
 //
 
+const msg = {
+  isRequired: `"${name}" is required!`,
+  isArray: `"${name}" must be an "array"`,
+  isBoolean: `"${name}" must be a "boolean" value`,
+  minLength: `"${name} must have a length of atleast ${min}`,
+  maxLength: `"${name} must have a length of no more then ${max}`,
+};
+
 class Schema extends Base {
   #data = undefined;
   #errors = [];
+  #name;
+  #value;
+  #valueOK;
 
   addError(name, message) {
     this.errors.push({ name, message });
@@ -16,137 +27,129 @@ class Schema extends Base {
 
   validate(data) {
     this.reset();
+    this.#data = data;
   }
 
   get errors() {
     return this.#errors;
   }
 
-  get ok() {
+  get dataOK() {
     return this.#errors.length === 0;
   }
 
-  getValue(name, required, defaultValue = undefined) {
-    // attempt to get the value from the data object
-    let value = this.#data[name];
-
-    // if value found then return it
-    if (value) {
-      return value;
-    } else if (required) {
-      // add error and return null if not found and is required
-      this.addError(name, `"${name}" is required!`);
-      return null;
-    } else {
-      // value not found and not required so return any default value
-      return defaultValue;
-    }
+  get valueOK() {
+    return this.#valueOK;
   }
 
-  isArray(name, required, min, max) {
-    // get the property value from the data object
-    let value = this.getValue(name, required, undefined);
-
-    // return if the property is not defined
-    if (value === null || value === undefined) {
-      return;
-    }
-
-    // ensure the property is an array
-    if (typeof value !== "array") {
-      return this.addError(name, `"${name}" must be an "array"`);
-    }
-
-    // if min length define then check length
-    if (min && value.length < min) {
-      return this.addError(
-        name,
-        `"${name} must have a length of atleast ${min}`
-      );
-    }
-
-    // if max length specified then check length
-    if (max && value.length > max) {
-      return this.addError(
-        name,
-        `"${name} must have a length of no more then ${max}`
-      );
-    }
-
-    // return the value
-    return value;
+  isArray(name, required, defaultValue, min, max) {
+    this.chechkName(name);
+    this.checkRequired(required, defaultValue);
+    this.checkType(["array"]);
+    this.checkRange(min, max);
+    return this.#value;
   }
 
   isBoolean(name, required, defaultValue) {
-    let value = getValue(name, required, defaultValue);
-    if (value && typeof value !== "boolean") {
-      return this.addError(name, `"${name}" must be a "boolean" value`);
-    }
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseBoolean();
+    this.checkType(["boolean"]);
+    return this.#value;
   }
 
-  isDate(name, required, defaultValue) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+  isDate(name, required, defaultValue, min, max) {
+    this.chechkName(name);
+    this.checkRequired(required, defaultValue);
+    this.parseDate();
+    this.checkType(["date"]);
+    this.checkRange(min, max);
+    return this.#value;
   }
 
-  isDuplicate(name, duplicateName) {
-    let value1 = this.getValue(name, true, undefined);
-    let value2 = this.getValue(duplicateName, true, undefined);
-    return value2;
-  }
+  isDuplicate(name, duplicateName) {}
 
   isEmail(name, required, defaultValue) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.chechkName(name);
+    this.checkRequired(required, defaultValue);
+    this.checkType(["string"]);
+    this.checkLength(5, 255);
+    this.checkRegEx(""); //!!mike, need to get regular expression for email address
+    return this.#value;
   }
 
   isEnum(name, required, defaultValue, validValues) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.chechkName(name);
+    this.checkRequired(required, defaultValue);
+    this.checkType(["string", defaultValue]);
+    this.checkInArray(validValues);
+    return this.#value;
   }
 
   isFloat(name, required, defaultValue, min, max) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseFloat();
+    this.checkType(["float", "integer", "number"]);
+    this.checkRange(min, max);
+    return this.#value;
   }
 
   isInteger(name, required, defaultValue, min, max) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseInteger();
+    this.checkRange(min, max);
+    return this.#value;
   }
 
   isNumber(name, required, defaultValue, min, max) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseFloat();
+    this.checkRange(min, max);
+    return this.#value;
   }
 
-  isPassword(name, required, min, max) {
-    let value = this.getValue(name, required, undefined);
-    return value;
+  isPassword(name, required, defaultValue) {
+    const passwordRegEx =
+      /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]{12,}$/;
+    return this.isRegEx(name, required, defaultValue, 12, 64, passwordRegEx);
   }
 
-  isRegEx(name, required, defaultValue, match) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+  isMatch(name, required, defaultValue, expression) {
+    this.chechkName(name);
+    this.checkRequired(required, defaultValue);
+    this.checkMatch(expression);
+    return this.#value;
   }
 
-  isString(name, require, min, max) {
-    let value = this.getValue(name, required, undefined);
-    return value;
+  isString(name, required, defaultValue, min, max) {
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.checkType(["string"]);
+    this.checkLength(min, max);
+    return this.#value;
   }
 
   isTime(name, required, defaultValue) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseTime();
+    this.checkType("time");
+    return this.#value;
   }
 
   isTimestamp(name, required, defaultValue) {
-    let value = this.getValue(name, required, defaultValue);
-    return value;
+    this.checkname(name);
+    this.checkRequired(required, defaultValue);
+    this.parseTimestamp();
+    this.checkType("time");
+    return this.#value;
   }
 }
 
-class ServerConfigClass extends Schema {
+class ServerConfigSchemaClass extends Schema {
   validate(data) {
     super.validate(data);
     this.isInteger("http_port", true, 3000, 1000, 65000);
