@@ -1,4 +1,4 @@
-// src/app/base.js:
+// base.js:
 
 "use strict";
 
@@ -13,125 +13,17 @@ const {
 const Strings = require("../lib/strings");
 const Errors = require("./errors");
 
-/**
- * Base class providing core utilities for all subclasses:
- * - Customizable logging
- * - Templated error throwing
- * - Not-implemented stubs
- * - Assertion helper
- * - Generic logging wrapper
- * - Class name introspection
- * - Optional initialization hook
- * - JSON serialization hook
- * - Environment mode access
- * - Error class access (custom error types)
- */
 class Base {
   #logger;
 
   constructor() {
     this.#logger = console;
+    this.#bindCustomErrorThrowers();
   }
-
-  // ─────────────────────────────────────────────────────────────
-  // Error Class Getters
-  // ─────────────────────────────────────────────────────────────
-
-  /** @returns {typeof Errors.ApplicationError} */
-  get ApplicationError() {
-    return Errors.ApplicationError;
-  }
-
-  /** @returns {typeof Errors.DatabaseError} */
-  get DatabaseError() {
-    return Errors.DatabaseError;
-  }
-
-  /** @returns {typeof Errors.NotFoundError} */
-  get NotFoundError() {
-    return Errors.NotFoundError;
-  }
-
-  /** @returns {typeof Errors.NotImplementedError} */
-  get NotImplementedError() {
-    return Errors.NotImplementedError;
-  }
-
-  /** @returns {typeof Errors.ValidationError} */
-  get ValidationError() {
-    return Errors.ValidationError;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Assertion / Error Handling
-  // ─────────────────────────────────────────────────────────────
-
-  assert(condition, message = "Assertion failed", values = undefined) {
-    if (!condition) {
-      this.throwError(message, values);
-    }
-  }
-
-  notImplemented(methodName) {
-    if (typeof methodName !== "string" || methodName.trim() === "") {
-      methodName = "<unknownMethod>";
-    }
-
-    const msg = `${this.className}.${methodName} is not implemented`;
-    this.logger.error(msg);
-
-    throw new this.NotImplementedError(this.className, methodName);
-  }
-
-  throwError(message, values = undefined) {
-    let finalMsg = message;
-
-    if (values && typeof values === "object") {
-      try {
-        finalMsg = Strings.expand(message, values);
-      } catch (expandErr) {
-        this.logger.error(
-          `Error expanding message template: ${expandErr.message}`,
-          { message, values }
-        );
-        finalMsg = message;
-      }
-    }
-
-    if (this.isProduction) {
-      this.logger.error(finalMsg);
-    } else {
-      this.logger.error(finalMsg, { values });
-    }
-
-    const err = new Error(finalMsg);
-    err.values = values;
-    err.className = this.className;
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(err, this.throwError);
-    }
-
-    throw err;
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Class Info / Meta
-  // ─────────────────────────────────────────────────────────────
 
   get className() {
     return this.constructor?.name || "<UnknownClass>";
   }
-
-  toJSON() {
-    return {
-      class: this.className,
-    };
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Environment Getters
-  // ─────────────────────────────────────────────────────────────
 
   get envMode() {
     return envMode;
@@ -153,10 +45,6 @@ class Base {
     return isTesting;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Logger Access
-  // ─────────────────────────────────────────────────────────────
-
   get logger() {
     return this.#logger;
   }
@@ -167,16 +55,27 @@ class Base {
     }
 
     if (typeof value !== "object") {
-      throw new TypeError(
-        `Logger must be an object, got type '${typeof value}'`
+      throw new Errors.TypeError(
+        500,
+        `${this.className}.logger: Expected object, got ${typeof value}`,
+        {
+          expected: "object",
+          received: typeof value,
+        }
       );
     }
 
     const required = ["error", "warn", "info", "debug", "trace"];
     for (const method of required) {
       if (typeof value[method] !== "function") {
-        throw new TypeError(
-          `Logger object is missing required method '${method}'`
+        throw new Errors.TypeError(
+          500,
+          `${this.className}.logger is missing method "${method}"`,
+          {
+            method,
+            expected: "function",
+            received: typeof value[method],
+          }
         );
       }
     }
@@ -184,24 +83,106 @@ class Base {
     this.#logger = value;
   }
 
-  log(level, message, meta = {}) {
-    const fn = this.logger[level];
-    if (typeof fn === "function") {
-      fn.call(this.logger, message, meta);
-    } else {
-      this.logger.error(
-        `Logger missing method '${level}', fallback to error. Message: ${message}`,
-        meta
-      );
+  toJSON() {
+    return {
+      class: this.className,
+    };
+  }
+
+  async initialize() {
+    // Optional override
+  }
+
+  assert(condition, message = "Assertion failed", payload = {}) {
+    if (!condition) {
+      this.throwError(500, message, payload);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Lifecycle
-  // ─────────────────────────────────────────────────────────────
+  notImplemented(methodName) {
+    if (typeof methodName !== "string" || methodName.trim() === "") {
+      methodName = "<unknownMethod>";
+    }
 
-  async initialize() {
-    // Override in subclass if needed
+    const message = `${this.className}.${methodName} is not implemented`;
+    this.throwNotImplementedError(501, message, {
+      class: this.className,
+      method: methodName,
+    });
+  }
+
+  /**
+   * Fallback generic error thrower
+   */
+  throwError(status = 500, message = "Internal Error", payload = {}) {
+    this.#prepareAndThrowError(
+      Error,
+      status,
+      message,
+      payload,
+      this.throwError
+    );
+  }
+
+  /**
+   * Prepares and throws an error of the given type with full logging and optional templating
+   */
+  #prepareAndThrowError(ErrorClass, status, message, payload = {}, traceFn) {
+    let finalMsg = message;
+
+    if (payload && typeof payload === "object") {
+      try {
+        finalMsg = Strings.expand(message, payload);
+      } catch (expandErr) {
+        this.logger.error(
+          `Error expanding message template: ${expandErr.message}`,
+          {
+            message,
+            payload,
+          }
+        );
+        finalMsg = message;
+      }
+    }
+
+    if (this.isProduction) {
+      this.logger.error(finalMsg);
+    } else {
+      this.logger.error(finalMsg, { status, payload });
+    }
+
+    const err = new ErrorClass(status, finalMsg, payload);
+    err.className = this.className;
+
+    if (Error.captureStackTrace && typeof traceFn === "function") {
+      Error.captureStackTrace(err, traceFn);
+    }
+
+    throw err;
+  }
+
+  /**
+   * Dynamically generates throwXError methods for each custom error class
+   */
+  #bindCustomErrorThrowers() {
+    const excluded = new Set(["BaseError"]);
+
+    for (const [key, ErrorClass] of Object.entries(Errors)) {
+      if (!key.endsWith("Error") || excluded.has(key)) continue;
+
+      const methodName = `throw${key}`;
+      if (typeof this[methodName] === "function") continue; // Don't overwrite
+
+      this[methodName] = (status, message, payload = {}) => {
+        this.#prepareAndThrowError(
+          ErrorClass,
+          status,
+          message,
+          payload,
+          this[methodName]
+        );
+      };
+    }
   }
 }
 

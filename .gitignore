@@ -1,6 +1,8 @@
 .ds_store
+.encrypt_key.txt
 .env
 .git
+.server.secret
 node_modules
 *.env
 *.key

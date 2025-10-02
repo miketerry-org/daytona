@@ -4,8 +4,14 @@
   "description": "Place holder for a upcomming MVC framework using convention over configuration",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js --watch .",
-    "test": "jest"
+    "dev": "NODE_ENV=dev nodemon index.js --watch .",
+    "test": "NODE_ENV=test jest --watch ."
+  },
+  "dependencies": {
+    "confirm-json": "^2.0.6",
+    "express": "^5.1.0",
+    "topsecret": "^0.11.0",
+    "topsecret-env": "^0.2.5"
   },
   "repository": {
     "type": "git",
@@ -23,5 +29,8 @@
   "bugs": {
     "url": "https://github.com/miketerry-org/daytona/issues"
   },
-  "homepage": "https://github.com/miketerry-org/daytona#readme"
+  "homepage": "https://github.com/miketerry-org/daytona#readme",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
 }
