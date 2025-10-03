@@ -1,4 +1,5 @@
 .ds_store
+.DS_Store
 .encrypt_key.txt
 .env
 .git

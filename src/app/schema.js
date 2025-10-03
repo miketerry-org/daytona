@@ -1,3 +1,5 @@
+// schema.js:
+
 "use strict";
 
 // load all necessary modules
@@ -120,14 +122,6 @@ class Schema extends Base {
       );
     }
   }
-
-  _parseBoolean(value) {}
-  _parseDate() {}
-  _parseFloat() {}
-  _parseInteger() {}
-  _parseNumber() {}
-  _parseTime() {}
-  _parseTimestamp() {}
 
   _response() {
     return {

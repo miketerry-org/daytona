@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "confirm-json": "^2.0.6",
+    "date-fns-tz": "^3.2.0",
     "express": "^5.1.0",
     "topsecret": "^0.11.0",
     "topsecret-env": "^0.2.5"
