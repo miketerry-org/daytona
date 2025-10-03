@@ -6,6 +6,15 @@
 const Base = require("./base");
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+/**
+ * Regex for password that requires:
+ * - at least one uppercase letter
+ * - at least one lowercase letter
+ * - at least one digit
+ * - at least one special symbol (non-alphanumeric)
+ * - minimum length 12
+ */
+const password_regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{12,}$/;
 
 class Schema extends Base {
   #data;
@@ -48,19 +57,94 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
-  expectBoolean(name, required, defaultValue) {}
-  expectDate(name, required, defaultValue, min, max) {}
-  expectDuplicate(name, duplicateName) {}
-  expectEmail(name, required, defaultValue) {}
-  expectEnum(name, required, defaultValue, validValues) {}
-  expectFloat(name, required, defaultValue, min, max) {}
-  expectInteger(name, required, defaultValue, min, max) {}
-  expectMatch(name, required, defaultValue, expression) {}
-  expectNumber(name, required, defaultValue, min, max) {}
-  expectPassword(name, required, defaultValue) {}
-  expectString(name, required, defaultValue, min, max) {}
-  expectTime(name, required, defaultValue) {}
-  expectTimestamp(name, required, defaultValue) {}
+  expectBoolean(name, required, defaultValue) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseBoolean();
+    this._checkType(["boolean"]);
+  }
+
+  expectDate(name, required, defaultValue, min, max) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseDate();
+    this._checkType(["date"]);
+    this._checkRange(min, max);
+  }
+
+  expectDuplicate(name, duplicateName) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this_checkDuplicate(duplicateName);
+  }
+
+  expectEmail(name, required, defaultValue) {
+    this.expectMatch(name, required, defaultValue, EMAIL_REGEX);
+  }
+
+  expectEnum(name, required, defaultValue, validValues) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._checkType(["string"]);
+    this._checkInArray(validValues);
+  }
+
+  expectFloat(name, required, defaultValue, min, max) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseFloat();
+    this._checkType(["float"]);
+    this._checkRange(min, max);
+  }
+
+  expectInteger(name, required, defaultValue, min, max) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseInteger();
+    this._checkType(["integer"]);
+    this._checkRange(min, max);
+  }
+
+  expectMatch(name, required, defaultValue, expression) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._checkType(["string"]);
+    this._checkRegEx(expression);
+  }
+
+  expectNumber(name, required, defaultValue, min, max) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseNumber();
+    this._checkType(["float", "integer", "number"]);
+    this._checkRange(min, max);
+  }
+
+  expectPassword(name, required, defaultValue) {
+    this.expectMatch(name, required, defaultValue, password_regex);
+  }
+
+  expectString(name, required, defaultValue, min, max, capitalize) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._capitalize(capitalize);
+    this._checkType(["string"]);
+    this._checkLength(min, max);
+  }
+
+  expectTime(name, required, defaultValue) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseTime();
+    this._checkType(["string"]);
+  }
+
+  expectTimestamp(name, required, defaultValue) {
+    this._checkName(name);
+    this._checkRequired(required, defaultValue);
+    this._parseTimestamp();
+    this._checkType(["string"]);
+  }
 
   /*
    * private declarations
