@@ -123,6 +123,14 @@ class Schema extends Base {
     }
   }
 
+  _parseBoolean() {}
+  _parseDate() {}
+  _parseFloat() {}
+  _parseInteger() {}
+  _parseNumber() {}
+  _parseTime() {}
+  _parseTimestamp() {}
+
   _response() {
     return {
       ok: this.#errors.length === 0,
