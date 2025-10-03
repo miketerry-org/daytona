@@ -8,6 +8,8 @@ const msg = {
   maxLength: `"${name} must have a length of no more then ${max}`,
 };
 
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
 class Schema extends Base {
   #data = undefined;
   #errors = [];
@@ -44,26 +46,26 @@ class Schema extends Base {
 
   isArray(name, required, defaultValue, min, max) {
     this.chechkName(name);
-    this.checkRequired(required, defaultValue);
-    this.checkType(["array"]);
-    this.checkRange(min, max);
+    this._checkRequired(required, defaultValue);
+    this._checkType(["array"]);
+    this._checkRange(min, max);
     return this.#value;
   }
 
   isBoolean(name, required, defaultValue) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
     this.parseBoolean();
-    this.checkType(["boolean"]);
+    this._checkType(["boolean"]);
     return this.#value;
   }
 
   isDate(name, required, defaultValue, min, max) {
     this.chechkName(name);
-    this.checkRequired(required, defaultValue);
+    this._checkRequired(required, defaultValue);
     this.parseDate();
-    this.checkType(["date"]);
-    this.checkRange(min, max);
+    this._checkType(["date"]);
+    this._checkRange(min, max);
     return this.#value;
   }
 
@@ -71,43 +73,43 @@ class Schema extends Base {
 
   isEmail(name, required, defaultValue) {
     this.chechkName(name);
-    this.checkRequired(required, defaultValue);
-    this.checkType(["string"]);
-    this.checkLength(5, 255);
-    this.checkRegEx(""); //!!mike, need to get regular expression for email address
+    this._checkRequired(required, defaultValue);
+    this._checkType(["string"]);
+    this._checkLength(5, 255);
+    this._checkRegEx(EMAIL_REGEX);
     return this.#value;
   }
 
   isEnum(name, required, defaultValue, validValues) {
     this.chechkName(name);
-    this.checkRequired(required, defaultValue);
-    this.checkType(["string", defaultValue]);
-    this.checkInArray(validValues);
+    this._checkRequired(required, defaultValue);
+    this._checkType(["string", defaultValue]);
+    this._checkInArray(validValues);
     return this.#value;
   }
 
   isFloat(name, required, defaultValue, min, max) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.parseFloat();
-    this.checkType(["float", "integer", "number"]);
-    this.checkRange(min, max);
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this.convertToFloat();
+    this._checkType(["float", "integer", "number"]);
+    this._checkRange(min, max);
     return this.#value;
   }
 
   isInteger(name, required, defaultValue, min, max) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.parseInteger();
-    this.checkRange(min, max);
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this.convertToInteger();
+    this._checkRange(min, max);
     return this.#value;
   }
 
   isNumber(name, required, defaultValue, min, max) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.parseFloat();
-    this.checkRange(min, max);
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this.convertToFloat();
+    this._checkRange(min, max);
     return this.#value;
   }
 
@@ -119,37 +121,37 @@ class Schema extends Base {
 
   isMatch(name, required, defaultValue, expression) {
     this.chechkName(name);
-    this.checkRequired(required, defaultValue);
-    this.checkMatch(expression);
+    this._checkRequired(required, defaultValue);
+    this._checkMatch(expression);
     return this.#value;
   }
 
   isString(name, required, defaultValue, min, max) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.checkType(["string"]);
-    this.checkLength(min, max);
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this._checkType(["string"]);
+    this._checkLength(min, max);
     return this.#value;
   }
 
   isTime(name, required, defaultValue) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.parseTime();
-    this.checkType("time");
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this.convertToTime();
+    this._checkType("time");
     return this.#value;
   }
 
   isTimestamp(name, required, defaultValue) {
-    this.checkname(name);
-    this.checkRequired(required, defaultValue);
-    this.parseTimestamp();
-    this.checkType("time");
+    this._checkname(name);
+    this._checkRequired(required, defaultValue);
+    this.convertToTimestamp();
+    this._checkType("time");
     return this.#value;
   }
 }
 
-class ServerConfigSchemaClass extends Schema {
+class ServerConfigSchema extends Schema {
   validate(data) {
     super.validate(data);
     this.isInteger("http_port", true, 3000, 1000, 65000);

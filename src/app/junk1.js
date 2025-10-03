@@ -1,31 +1,4 @@
 
-  addError(name, message) {
-    this.errors.push({ name, message });
-    return null;
-  }
-
-  reset(data) {
-    this.#data = data;
-    this.#errors = [];
-  }
-
-  validate(data) {
-    this.reset(data);
-    this.#data = data;
-  }
-
-  get errors() {
-    return this.#errors;
-  }
-
-  get dataOK() {
-    return this.#errors.length === 0;
-  }
-
-  get valueOK() {
-    return this.#valueOK;
-  }
-
   isArray(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
