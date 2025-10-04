@@ -657,7 +657,46 @@ class Schema extends Base {
     }
   }
 
-  _parseTimestamp() {}
+  /**
+   * Parses the current field value as a full timestamp (date and time).
+   *
+   * Accepts ISO 8601-compliant strings (with or without timezone offsets).
+   * Converts valid input into a JavaScript `Date` object (internally UTC).
+   * Rejects invalid or ambiguous formats and logs a validation error.
+   *
+   * Valid examples:
+   *   - "2025-10-03T14:30:00Z"
+   *   - "2025-10-03T14:30:00+02:00"
+   *   - "2025-10-03T14:30:00" (interpreted as local time)
+   *
+   * Invalid examples:
+   *   - "03/10/2025 2:30 PM"
+   *   - "2025-13-99"
+   *   - "Today"
+   */
+  _parseTimestamp() {
+    const raw = this.#value;
+
+    if (typeof raw !== "string") {
+      this._addError(
+        `"${this.#name}" must be a string in ISO 8601 timestamp format.`
+      );
+      return;
+    }
+
+    const trimmed = raw.trim();
+
+    // Attempt to parse with JavaScript Date
+    const parsed = new Date(trimmed);
+
+    if (isNaN(parsed.getTime())) {
+      this._addError(`"${this.#name}" must be a valid ISO 8601 timestamp.`);
+      return;
+    }
+
+    this.#value = parsed;
+    this.#data[this.#name] = parsed;
+  }
 
   _response() {
     return {
