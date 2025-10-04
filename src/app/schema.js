@@ -5,17 +5,6 @@
 // load all necessary modules
 const Base = require("./base");
 
-const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-/**
- * Regex for password that requires:
- * - at least one uppercase letter
- * - at least one lowercase letter
- * - at least one digit
- * - at least one special symbol (non-alphanumeric)
- * - minimum length 12
- */
-const password_regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{12,}$/;
-
 class Schema extends Base {
   #data;
   #errors;
@@ -50,6 +39,15 @@ class Schema extends Base {
     this.notImplemented("checkProperties");
   }
 
+  /**
+   * Validates that the property is an array, and optionally checks min/max length.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Minimum number of items.
+   * @param {number} [max] - Maximum number of items.
+   */
   expectArray(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -57,6 +55,13 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
+  /**
+   * Validates and parses a boolean-like value (e.g., true, "yes", 1).
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
   expectBoolean(name, required, defaultValue) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -64,6 +69,15 @@ class Schema extends Base {
     this._checkType(["boolean"]);
   }
 
+  /**
+   * Validates a date string and converts it to a JavaScript Date object.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {string|Date} [min] - Optional minimum date.
+   * @param {string|Date} [max] - Optional maximum date.
+   */
   expectDate(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -72,16 +86,38 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
+  /**
+   * Validates that the value of this property duplicates the value of another.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {string} duplicateName - Name of the other property to match.
+   */
   expectDuplicate(name, duplicateName) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
     this_checkDuplicate(duplicateName);
   }
 
+  /**
+   * Validates that the value is a well-formed email address.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
   expectEmail(name, required, defaultValue) {
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     this.expectMatch(name, required, defaultValue, EMAIL_REGEX);
   }
 
+  /**
+   * Validates that the value is one of a fixed list of values (enum).
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {string[]} validValues - Array of allowed string values.
+   */
   expectEnum(name, required, defaultValue, validValues) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -89,6 +125,15 @@ class Schema extends Base {
     this._checkInArray(validValues);
   }
 
+  /**
+   * Parses and validates a float number, with optional range.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Optional minimum value.
+   * @param {number} [max] - Optional maximum value.
+   */
   expectFloat(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -97,6 +142,30 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
+  /**
+   * Validates a string containing only hexadecimal characters.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Minimum length of the hex string.
+   * @param {number} [max] - Maximum length of the hex string.
+   */
+  expectHexString(name, required, defaultValue, min, max) {
+    const HEX_REGEX = /^[0-9a-fA-F]+$/;
+    this.expectMatch(name, required, defaultValue, HEX_REGEX);
+    this._checkLength(min, max);
+  }
+
+  /**
+   * Parses and validates an integer, with optional min/max range.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Optional minimum value.
+   * @param {number} [max] - Optional maximum value.
+   */
   expectInteger(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -105,6 +174,40 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
+  /**
+   * Validates that the value is a valid IPv4 address.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
+  expectIPV4(name, required, defaultValue) {
+    const IPV4_REGEX =
+      /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+    this.expectMatch(name, required, defaultValue, IPV4_REGEX);
+  }
+
+  /**
+   * Validates that the value is a valid IPv6 address.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
+  expectIPV6(name, required, defaultValue) {
+    const IPV6_REGEX =
+      /^(([0-9a-fA-F]{1,4}:){7}([0-9a-fA-F]{1,4}|:))|(([0-9a-fA-F]{1,4}:){1,7}:)|(([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4})|(([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2})|(([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3})|(([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4})|(([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5})|([0-9a-fA-F]{1,4}:)((:[0-9a-fA-F]{1,4}){1,6})|(:)((:[0-9a-fA-F]{1,4}){1,7}|:)|(::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]\d)|([0-1]?\d{1,2}))\.){3}(25[0-5]|(2[0-4]\d)|([0-1]?\d{1,2})))$/;
+    this.expectMatch(name, required, defaultValue, IPV6_REGEX);
+  }
+
+  /**
+   * Validates that the value matches a given regular expression.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {RegExp} expression - Regular expression to test against.
+   */
   expectMatch(name, required, defaultValue, expression) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -112,6 +215,15 @@ class Schema extends Base {
     this._checkRegEx(expression);
   }
 
+  /**
+   * Parses and validates a numeric value, with optional min/max.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Optional minimum value.
+   * @param {number} [max] - Optional maximum value.
+   */
   expectNumber(name, required, defaultValue, min, max) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -120,10 +232,28 @@ class Schema extends Base {
     this._checkRange(min, max);
   }
 
+  /**
+   * Validates password strength using predefined rules (upper, lower, digit, symbol, min length 12).
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
   expectPassword(name, required, defaultValue) {
+    const password_regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*\W).{12,}$/;
     this.expectMatch(name, required, defaultValue, password_regex);
   }
 
+  /**
+   * Validates a string, optionally capitalizes it, and checks length.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   * @param {number} [min] - Minimum string length.
+   * @param {number} [max] - Maximum string length.
+   * @param {"upper"|"lower"|"firstcap"|"title"|"none"} [capitalize] - Capitalization format to apply.
+   */
   expectString(name, required, defaultValue, min, max, capitalize) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -132,6 +262,13 @@ class Schema extends Base {
     this._checkLength(min, max);
   }
 
+  /**
+   * Parses and validates a time string (e.g., "13:45") without date context.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
   expectTime(name, required, defaultValue) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
@@ -139,6 +276,13 @@ class Schema extends Base {
     this._checkType(["string"]);
   }
 
+  /**
+   * Parses a full timestamp with date and time, with optional time zone conversion.
+   *
+   * @param {string} name - Property name to validate.
+   * @param {boolean} required - Whether the property is required.
+   * @param {*} defaultValue - Default value if not provided.
+   */
   expectTimestamp(name, required, defaultValue) {
     this._checkName(name);
     this._checkRequired(required, defaultValue);
