@@ -10,3 +10,4 @@ node_modules
 *.key
 _tenants/*.env
 node_modules/
+x-trash

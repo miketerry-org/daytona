@@ -34,5 +34,8 @@
   "bugs": {
     "url": "https://github.com/miketerry-org/daytona/issues"
   },
-  "homepage": "https://github.com/miketerry-org/daytona#readme"
+  "homepage": "https://github.com/miketerry-org/daytona#readme",
+  "files": [
+    "src"
+  ]
 }
