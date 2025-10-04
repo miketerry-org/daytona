@@ -360,7 +360,89 @@ class Schema extends Base {
     }
   }
 
-  _parseDate() {}
+  /**
+   * Parses the current field value into a Date or timestamp, based on the conversion mode.
+   *
+   * This method handles various date formats and conversion strategies.
+   * It updates both the internal value and the original data object.
+   * If parsing fails, a validation error is added.
+   *
+   * Supported `convert` modes:
+   * - "none": Do not modify the value.
+   * - "date": Parse as date-only (YYYY-MM-DD), interpreted in local time.
+   * - "utc": Parse ISO datetime and normalize to UTC.
+   * - "local": Parse ISO datetime in server-local time.
+   * - "timestamp": Parse and convert to a Unix timestamp (in milliseconds).
+   * - "zoned": Reserved for future support (e.g., timezones like "America/New_York").
+   *
+   * @param {string} convert - Conversion strategy for the date field.
+   */
+  _parseDate(convert = "date") {
+    const raw = this.#value;
+    let parsed = null;
+
+    if (convert === "none") {
+      return;
+    }
+
+    if (
+      typeof raw !== "string" &&
+      typeof raw !== "number" &&
+      !(raw instanceof Date)
+    ) {
+      this._addError(`"${this.#name}" must be a valid date value.`);
+      return;
+    }
+
+    try {
+      switch (convert) {
+        case "date":
+          if (typeof raw === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+            parsed = new Date(`${raw}T00:00:00`);
+          } else {
+            parsed = new Date(raw);
+          }
+          break;
+
+        case "utc":
+        case "local":
+          parsed = new Date(raw);
+          break;
+
+        case "timestamp":
+          parsed = new Date(raw);
+          if (!isNaN(parsed)) {
+            parsed = parsed.getTime();
+          }
+          break;
+
+        case "zoned":
+          this._addError(
+            `"${
+              this.#name
+            }" uses unsupported convert mode "zoned" (not yet implemented).`
+          );
+          return;
+
+        default:
+          this._addError(
+            `"${this.#name}" has unknown date conversion mode: "${convert}".`
+          );
+          return;
+      }
+
+      if (!parsed || isNaN(parsed)) {
+        this._addError(`"${this.#name}" must be a valid date.`);
+        return;
+      }
+
+      this.#value = parsed;
+      this.#data[this.#name] = parsed;
+    } catch (err) {
+      this._addError(`"${this.#name}" could not be parsed as a valid date.`);
+    }
+  }
+
   _parseFloat() {}
   _parseInteger() {}
   _parseNumber() {}
