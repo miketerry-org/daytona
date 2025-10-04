@@ -5,22 +5,9 @@
 // load all necessary modules
 const fs = require("fs");
 const path = require("path");
-const SecretEnv = require("topsecret-env");
+const topsecret = require("topsecret");
 const { isProduction } = require("../lib/environment");
 const Base = require("./base");
-
-// if not in production mode then load encryption key from the ".env" file
-if (!isProduction) {
-  require("dotenv").config();
-}
-
-// Final validation for ENCRYPT_KEY in all environments
-if (!process.env.ENCRYPT_KEY || process.env.ENCRYPT_KEY.length !== 64) {
-  console.error(
-    `The "ENCRYPT_KEY" environment variable is missing or not exactly 64 characters!`
-  );
-  process.exit(1);
-}
 
 class Configurable extends Base {
   #config = {};

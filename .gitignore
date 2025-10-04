@@ -7,7 +7,7 @@
 .gitignore
 .npmignore
 .server.secret
-node_modules
+node_modules/
 *.env
 *.key
 _tenants/*.env

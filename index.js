@@ -2,8 +2,21 @@
 
 "use strict";
 
+// if not in production mode then load encryption key from the ".env" file
+const { isProduction } = require("../lib/environment");
+if (!isProduction) {
+  require("dotenv").config();
+}
+
+// Final validation for ENCRYPT_KEY in all environments
+if (!process.env.ENCRYPT_KEY || process.env.ENCRYPT_KEY.length !== 64) {
+  console.error(
+    `The "ENCRYPT_KEY" environment variable is missing or not exactly 64 characters!`
+  );
+  process.exit(1);
+}
+
 // load all necessary modules
-/*
 const Application = require("./src/app/application");
 const Base = require("./src/app/base");
 const Configurable = require("./src/app/configurable");
@@ -28,4 +41,3 @@ module.exports = {
   Service,
   TenantManager,
 };
-*/
