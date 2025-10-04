@@ -5,32 +5,13 @@
 // load all necessary modules
 const fs = require("fs");
 const path = require("path");
-const Confirm = require("confirm-json");
 const SecretEnv = require("topsecret-env");
 const { isProduction } = require("../lib/environment");
 const Base = require("./base");
 
-// get the full path to the development encryption key file
-const keyFilePath = path.resolve(process.cwd(), ".encrypt_key.txt");
-
-//  Prevent use of local key file in production
-if (isProduction && fs.existsSync(keyFilePath)) {
-  console.error(
-    `[SECURITY] Detected ".encrypt_key.txt" file in production environment! This should never happen.`
-  );
-  process.exit(1);
-}
-
-//  Load ENCRYPT_KEY from file in non-production environments
+// if not in production mode then load encryption key from the ".env" file
 if (!isProduction) {
-  try {
-    const key = fs.readFileSync(keyFilePath, "utf8").trim();
-    process.env.ENCRYPT_KEY = key;
-  } catch (err) {
-    console.error(`Failed to load ENCRYPT_KEY from ${keyFilePath}`);
-    console.error(err.message);
-    process.exit(1);
-  }
+  require("dotenv").config();
 }
 
 // Final validation for ENCRYPT_KEY in all environments

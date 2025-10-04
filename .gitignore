@@ -1,8 +1,9 @@
 .ds_store
-.DS_Store
 .encrypt_key.txt
 .env
 .git
+.gitignore
+.npmignore
 .server.secret
 node_modules
 *.env
