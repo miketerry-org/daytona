@@ -443,9 +443,139 @@ class Schema extends Base {
     }
   }
 
-  _parseFloat() {}
-  _parseInteger() {}
-  _parseNumber() {}
+  /**
+   * Parses the current field value as a floating-point number.
+   *
+   * Accepts strings or numbers and attempts to coerce them into a valid float.
+   * On success, updates the internal value and original data. On failure,
+   * logs a validation error using `_addError()`.
+   *
+   * Examples of accepted inputs:
+   *   - "3.14"
+   *   - " -0.01 "
+   *   - 5.0
+   *
+   * Invalid inputs (which trigger errors):
+   *   - "abc"
+   *   - true
+   *   - null
+   *   - NaN
+   */
+  _parseFloat() {
+    const raw = this.#value;
+
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      // Already a valid float
+      return;
+    }
+
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      const parsed = parseFloat(trimmed);
+
+      if (!isNaN(parsed) && Number.isFinite(parsed)) {
+        this.#value = parsed;
+        this.#data[this.#name] = parsed;
+        return;
+      }
+    }
+
+    // If we got here, parsing failed
+    this._addError(`"${this.#name}" must be a valid floating-point number.`);
+  }
+
+  /**
+   * Parses the current field value as an integer.
+   *
+   * Accepts strings or numbers and attempts to coerce them into a valid integer.
+   * If the input is a valid integer (finite, no decimal part), it updates the
+   * internal value and original data. Otherwise, logs a validation error.
+   *
+   * Examples of accepted inputs:
+   *   - "42"
+   *   - " -10 "
+   *   - 0
+   *
+   * Invalid inputs (which trigger errors):
+   *   - "3.14"
+   *   - 100.5
+   *   - "abc"
+   *   - NaN
+   *   - null
+   */
+  _parseInteger() {
+    const raw = this.#value;
+
+    if (typeof raw === "number" && Number.isInteger(raw)) {
+      return; // Already a valid integer
+    }
+
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      const parsed = parseInt(trimmed, 10);
+
+      // Ensure it's a valid number and not a float disguised as int
+      if (
+        (!isNaN(parsed) &&
+          Number.isFinite(parsed) &&
+          String(parsed) === trimmed) ||
+        String(parsed) === trimmed.replace(/^0+/, "0")
+      ) {
+        if (parseFloat(trimmed) === parsed) {
+          this.#value = parsed;
+          this.#data[this.#name] = parsed;
+          return;
+        }
+      }
+    }
+
+    this._addError(`"${this.#name}" must be a valid integer.`);
+  }
+
+  /**
+   * Parses the current field value as a numeric value (integer or float).
+   *
+   * Accepts both strings and numbers. If the value can be coerced into a valid
+   * number (finite, not NaN), it is parsed and saved into the internal value and
+   * the original data. Otherwise, a validation error is recorded.
+   *
+   * This parser is more permissive than `_parseInteger()` or `_parseFloat()` and
+   * allows both integer and decimal formats.
+   *
+   * Examples of accepted inputs:
+   *   - "3.14"
+   *   - "-42"
+   *   - " 0 "
+   *   - 99.99
+   *
+   * Invalid inputs (which trigger errors):
+   *   - "abc"
+   *   - "12abc"
+   *   - NaN
+   *   - true
+   *   - null
+   */
+  _parseNumber() {
+    const raw = this.#value;
+
+    if (typeof raw === "number" && Number.isFinite(raw)) {
+      return; // Already a valid number
+    }
+
+    if (typeof raw === "string") {
+      const trimmed = raw.trim();
+      const parsed = Number(trimmed);
+
+      if (!isNaN(parsed) && Number.isFinite(parsed)) {
+        this.#value = parsed;
+        this.#data[this.#name] = parsed;
+        return;
+      }
+    }
+
+    this._addError(`"${this.#name}" must be a valid number.`);
+  }
+
   _parseTime() {}
   _parseTimestamp() {}
 
