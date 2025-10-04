@@ -1,0 +1,16 @@
+<<<<<<< HEAD
+=======
+.ds_store
+.encrypt_key.txt
+.env
+.git
+.gitignore
+.npmignore
+.server.secret
+node_modules
+*.env
+*.key
+_tenants/*.env
+node_modules/
+x-trash
+>>>>>>> 1df544f254899c949c01dc9a77d386e86b715f66
