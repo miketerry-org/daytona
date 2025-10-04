@@ -1,5 +1,5 @@
 // schema.js:
-
+//
 "use strict";
 
 // load all necessary modules
@@ -205,6 +205,119 @@ class Schema extends Base {
         `"${this.name}" is typee "${type}" but should be [${types}]`
       );
     }
+  }
+
+  /**
+   * Applies a specific capitalization format to the current property value if it is a string.
+   *
+   * Supported modes:
+   * - "none": Do not alter the value.
+   * - "upper": Convert the entire string to uppercase.
+   * - "lower": Convert the entire string to lowercase.
+   * - "firstcap": Capitalize only the first character, leave the rest unchanged.
+   * - "title": Capitalize the first letter of each word.
+   * - "sentence": Capitalize only the first letter of the first sentence.
+   * - "camel": Convert to camelCase.
+   * - "pascal": Convert to PascalCase.
+   * - "snake": Convert to snake_case (lowercase with underscores).
+   * - "kebab": Convert to kebab-case (lowercase with hyphens).
+   *
+   * If the value is not a string or is empty, this method does nothing.
+   *
+   * @param {string} capitalize - The capitalization format to apply.
+   */
+  _capitalize(capitalize) {
+    if (!capitalize || typeof capitalize !== "string") {
+      return;
+    }
+
+    let value = this.#value;
+
+    if (typeof value !== "string" || value.length === 0) {
+      return;
+    }
+
+    // Helper: Title case each word
+    const toTitleCase = str =>
+      str.replace(
+        /\w\S*/g,
+        txt => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
+      );
+
+    // Helper: Sentence case
+    const toSentenceCase = str => {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    };
+
+    // Helper: camelCase
+    const toCamelCase = str => {
+      return str
+        .toLowerCase()
+        .replace(/[-_\s]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ""));
+    };
+
+    // Helper: PascalCase
+    const toPascalCase = str => {
+      const camel = toCamelCase(str);
+      return camel.charAt(0).toUpperCase() + camel.slice(1);
+    };
+
+    // Helper: snake_case
+    const toSnakeCase = str => {
+      return str
+        .replace(/\s+/g, "_")
+        .replace(/[A-Z]/g, c => "_" + c.toLowerCase())
+        .replace(/^-/, "")
+        .toLowerCase();
+    };
+
+    // Helper: kebab-case
+    const toKebabCase = str => {
+      return str
+        .replace(/\s+/g, "-")
+        .replace(/[A-Z]/g, c => "-" + c.toLowerCase())
+        .replace(/^-/, "")
+        .toLowerCase();
+    };
+
+    let result;
+
+    switch (capitalize.toLowerCase()) {
+      case "upper":
+        result = value.toUpperCase();
+        break;
+      case "lower":
+        result = value.toLowerCase();
+        break;
+      case "firstcap":
+        result = value.charAt(0).toUpperCase() + value.slice(1);
+        break;
+      case "title":
+        result = toTitleCase(value);
+        break;
+      case "sentence":
+        result = toSentenceCase(value);
+        break;
+      case "camel":
+        result = toCamelCase(value);
+        break;
+      case "pascal":
+        result = toPascalCase(value);
+        break;
+      case "snake":
+        result = toSnakeCase(value);
+        break;
+      case "kebab":
+        result = toKebabCase(value);
+        break;
+      case "none":
+      default:
+        return; // Do nothing
+    }
+
+    // Assign transformed value to internal state and original data
+    this.#value = result;
+    this.#data[this.#name] = result;
   }
 
   _parseBoolean() {}
