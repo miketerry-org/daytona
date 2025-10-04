@@ -576,7 +576,87 @@ class Schema extends Base {
     this._addError(`"${this.#name}" must be a valid number.`);
   }
 
-  _parseTime() {}
+  /**
+   * Parses the current field value as a time-of-day (e.g., "14:30").
+   *
+   * This method supports flexible parsing modes depending on the `convert` strategy.
+   * It does NOT handle timezones or dates — only naive, wall-clock times.
+   * If parsing fails, a validation error is recorded using `_addError()`.
+   *
+   * Supported `convert` modes:
+   * - "none":       Do not modify or validate the value.
+   * - "time":       Accepts "HH:mm" or "HH:mm:ss" (24-hour format).
+   * - "normalize":  Converts "HH:mm" → "HH:mm:00".
+   * - "seconds":    Converts to total seconds since midnight (integer).
+   * - "minutes":    Converts to total minutes since midnight (integer).
+   *
+   * @param {string} convert - How the time should be parsed or transformed.
+   */
+  _parseTime(convert = "time") {
+    const raw = this.#value;
+
+    if (convert === "none") {
+      return;
+    }
+
+    if (typeof raw !== "string") {
+      this._addError(
+        `"${this.#name}" must be a string representing time (e.g., "14:30").`
+      );
+      return;
+    }
+
+    const trimmed = raw.trim();
+
+    // Match HH:mm or HH:mm:ss (24-hour format)
+    const timeRegex = /^([01]?\d|2[0-3]):([0-5]?\d)(?::([0-5]?\d))?$/;
+    const match = trimmed.match(timeRegex);
+
+    if (!match) {
+      this._addError(
+        `"${this.#name}" must be in "HH:mm" or "HH:mm:ss" format.`
+      );
+      return;
+    }
+
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const seconds = match[3] ? parseInt(match[3], 10) : 0;
+
+    switch (convert) {
+      case "time":
+        // Store as-is if valid
+        this.#value = trimmed;
+        this.#data[this.#name] = trimmed;
+        break;
+
+      case "normalize":
+        // Normalize to HH:mm:ss format
+        const h = String(hours).padStart(2, "0");
+        const m = String(minutes).padStart(2, "0");
+        const s = String(seconds).padStart(2, "0");
+        const normalized = `${h}:${m}:${s}`;
+        this.#value = normalized;
+        this.#data[this.#name] = normalized;
+        break;
+
+      case "seconds":
+        this.#value = hours * 3600 + minutes * 60 + seconds;
+        this.#data[this.#name] = this.#value;
+        break;
+
+      case "minutes":
+        this.#value = hours * 60 + minutes + seconds / 60;
+        this.#data[this.#name] = this.#value;
+        break;
+
+      default:
+        this._addError(
+          `"${this.#name}" has unknown time conversion mode: "${convert}".`
+        );
+    }
+  }
+
   _parseTimestamp() {}
 
   _response() {
