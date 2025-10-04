@@ -320,7 +320,46 @@ class Schema extends Base {
     this.#data[this.#name] = result;
   }
 
-  _parseBoolean() {}
+  /**
+   * Parses the current property value into a boolean if it matches
+   * known truthy or falsy values. Otherwise, logs an error.
+   *
+   * Truthy values (case-insensitive): true, "true", 1, "1", "y", "yes", "on"
+   * Falsy values (case-insensitive): false, "false", 0, "0", "n", "no", "off"
+   *
+   * On successful parse, updates both internal and original data value.
+   * If parsing fails, records a validation error.
+   */
+  _parseBoolean() {
+    const trueValues = ["true", "1", "y", "yes", "on"];
+    const falseValues = ["false", "0", "n", "no", "off"];
+
+    let value = this.#value;
+    let parsed = undefined;
+
+    if (typeof value === "boolean") {
+      return; // already valid
+    }
+
+    if (typeof value === "number") {
+      if (value === 1) parsed = true;
+      else if (value === 0) parsed = false;
+    } else if (typeof value === "string") {
+      const normalized = value.trim().toLowerCase();
+      if (trueValues.includes(normalized)) parsed = true;
+      else if (falseValues.includes(normalized)) parsed = false;
+    }
+
+    if (typeof parsed === "boolean") {
+      this.#value = parsed;
+      this.#data[this.#name] = parsed;
+    } else {
+      this._addError(
+        `"${this.#name}" is "${parsed}" which is not a valid boolean value.`
+      );
+    }
+  }
+
   _parseDate() {}
   _parseFloat() {}
   _parseInteger() {}
