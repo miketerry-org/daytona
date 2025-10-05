@@ -1,6 +1,7 @@
 {
   "httpp_port": 3000,
-  "db_url": "mongodb+srv://doadmin:b3ly0s9C5V6v28m7@tworoads-one-node-db-92e22e66.mongo.ondigitalocean.com/tworoads-server?tls=true&authSource=admin",
+  "db_classname": "sqlite3Connection",
+  "db_url": "../data/application.sqlite3",
   "log_collection_name": "logs",
   "log_expiration_days": 1,
   "log_capped": false,
