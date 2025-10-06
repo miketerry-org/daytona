@@ -10,27 +10,27 @@ const { isProduction } = require("../lib/environment");
 const Base = require("./base");
 
 class Configurable extends Base {
+  #filename = "";
   #config = {};
 
-  constructor(config = undefined) {
+  constructor(filename = "") {
     // call parent constructor
     super();
 
-    // if config parameter passed then process it
+    // if filename parameter passed then process it
     if (config) {
-      this.#processConfig(config);
+      this.#processConfigFile(filename);
     }
-  }
-
-  loadEnvFile(filename) {
-    this.processConfig();
   }
 
   validate(confirm) {
     this.notImplemented(`validateConfig`);
   }
 
-  #processConfig(config) {
+  #processConfigFile(filename) {
+    // loadd encrypted json file
+    let config = {}; //!!mike
+
     // throw error if config is not an object
     if (typeof config !== "object") {
       this.throwError(`The "config" parameter must be an object.`);

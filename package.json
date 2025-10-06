@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "NODE_ENV=dev nodemon index.js --watch .",
-    "test": "NODE_ENV=test jest --watch ."
+    "env": "NODE_ENV=development nodemon ./src/lib/env.js",
+    "test": "NODE_ENV=test jest"
   },
   "dependencies": {
     "date-fns-tz": "^3.2.0",
